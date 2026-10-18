@@ -38,12 +38,14 @@ resource "aws_vpc_security_group_ingress_rule" "alb_http" {
   cidr_ipv4 = "0.0.0.0/0"
 }
 
-# Allow outbound traffic
-resource "aws_vpc_security_group_egress_rule" "alb_all" {
+# Allow the ALB to communicate only with backend targets.
+
+resource "aws_vpc_security_group_egress_rule" "alb_to_backend" {
   security_group_id = aws_security_group.alb.id
 
-  description = "Allow outbound traffic"
-
-  ip_protocol = "-1"
-  cidr_ipv4   = "0.0.0.0/0"
+  description                  = "Allow ALB traffic to private backend"
+  ip_protocol                  = "tcp"
+  from_port                    = 80
+  to_port                      = 80
+  referenced_security_group_id = aws_security_group.backend.id
 }
