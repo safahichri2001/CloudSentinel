@@ -1,0 +1,45 @@
+#!/bin/bash
+set -euo pipefail
+
+# Create a dedicated system account
+useradd --system --no-create-home --shell /sbin/nologin cloudsentinel
+
+# Create application directory
+mkdir -p /opt/cloudsentinel
+
+# Install the Python application
+cat > /opt/cloudsentinel/backend.py <<'PYTHON_APP'
+${backend_python}
+PYTHON_APP
+
+chmod 750 /opt/cloudsentinel
+chmod 640 /opt/cloudsentinel/backend.py
+chown -R cloudsentinel:cloudsentinel /opt/cloudsentinel
+
+# Configure systemd
+cat > /etc/systemd/system/cloudsentinel.service <<'SERVICE'
+[Unit]
+Description=CloudSentinel Demo Backend
+After=network.target
+
+[Service]
+Type=simple
+User=cloudsentinel
+Group=cloudsentinel
+WorkingDirectory=/opt/cloudsentinel
+ExecStart=/usr/bin/python3 /opt/cloudsentinel/backend.py
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
+SERVICE
+
+systemctl daemon-reload
+systemctl enable --now cloudsentinel.service
