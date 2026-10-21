@@ -1,3 +1,4 @@
+
 # ============================================================
 # CloudSentinel - Private Backend Security Group
 # ============================================================
@@ -7,12 +8,19 @@ resource "aws_security_group" "backend" {
   description = "Restrict access to private application backends"
   vpc_id      = aws_vpc.cloudsentinel.id
 
+  # No unrestricted outbound traffic from the backend
+  egress = []
+
   tags = {
     Name        = "cloudsentinel-backend-sg"
     Project     = "CloudSentinel"
     Environment = "lab"
   }
 }
+
+# ============================================================
+# Ingress Rule - ALB to Private Backend
+# ============================================================
 
 # Only the ALB can reach the backend on TCP port 80.
 

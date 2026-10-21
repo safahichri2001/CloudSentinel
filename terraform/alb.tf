@@ -1,4 +1,10 @@
+# ============================================================
+# CloudSentinel - Application Load Balancer
+# ============================================================
+
 resource "aws_lb" "cloudsentinel" {
+  count = var.enable_app ? 1 : 0
+
   name               = "cloudsentinel-alb"
   internal           = false
   load_balancer_type = "application"
@@ -18,11 +24,14 @@ resource "aws_lb" "cloudsentinel" {
     Environment = "lab"
   }
 }
+
 # ============================================================
 # CloudSentinel - Target Group
 # ============================================================
 
 resource "aws_lb_target_group" "cloudsentinel" {
+  count = var.enable_app ? 1 : 0
+
   name        = "cloudsentinel-tg"
   port        = 80
   protocol    = "HTTP"
@@ -32,7 +41,7 @@ resource "aws_lb_target_group" "cloudsentinel" {
   health_check {
     enabled             = true
     protocol            = "HTTP"
-    path                = "/"
+    path                = "/health"
     matcher             = "200-399"
     interval            = 30
     timeout             = 5
@@ -52,13 +61,15 @@ resource "aws_lb_target_group" "cloudsentinel" {
 # ============================================================
 
 resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.cloudsentinel.arn
+  count = var.enable_app ? 1 : 0
+
+  load_balancer_arn = aws_lb.cloudsentinel[0].arn
   port              = 80
   protocol          = "HTTP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.cloudsentinel.arn
+    target_group_arn = aws_lb_target_group.cloudsentinel[0].arn
   }
 
   tags = {
